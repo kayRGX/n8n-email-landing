@@ -18,53 +18,36 @@
   </div>
 
   <script>
-    // ================================================================
-    // ⭐ 您唯一需要修改的地方！請填入您 n8n 的 Webhook URL ⭐
-    // ================================================================
+    // 這裡設定 n8n webhook URL
     const YES_WEBHOOK_URL = "https://rgx-kay.app.n8n.cloud/webhook-test/27bc3de4-92a4-46ca-9ed0-e84c0a4ec6e3";
-    const NO_WEBHOOK_URL = "https://rgx-kay.app.n8n.cloud/webhook/YOUR_REAL_NO_WEBHOOK_URL_HERE"; // ⚠️ 請務必換成您「不行」的真實 URL
+    const NO_WEBHOOK_URL = "https://rgx-kay.app.n8n.cloud/webhook/YOUR_REAL_NO_WEBHOOK_URL_HERE"; //待填
 
-    // 當頁面載入後，立即執行
     window.onload = function() {
       const params = new URLSearchParams(window.location.search);
       const decision = params.get('decision');
-      
+      const recordId = params.get('recordId');
+      const email = params.get('email');
+
+      if (!decision || !recordId || !email) {
+        document.getElementById('status-message').innerText = '缺少必要參數。';
+        return;
+      }
+
       let targetWebhookUrl = "";
-      
       if (decision === 'yes') {
         targetWebhookUrl = YES_WEBHOOK_URL;
       } else if (decision === 'no') {
         targetWebhookUrl = NO_WEBHOOK_URL;
       } else {
-        document.getElementById('status-message').innerText = '錯誤：缺少決策參數。';
-        return; // 如果沒有 decision 參數，就停止執行
+        document.getElementById('status-message').innerText = '決策參數錯誤。';
+        return;
       }
 
-      // 使用獲取到的參數，在背景送出 POST 請求到 n8n
-      fetch(targetWebhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          recordId: params.get('recordId'),
-          email: params.get('email'),
-          decision: decision,
-        }),
-      })
-      .then(response => {
-        if (!response.ok) {
-          // 如果伺服器回應錯誤 (例如 404, 500)
-          throw new Error('網路回應不正確');
-        }
-        console.log('Successfully sent POST request to n8n.');
-        // 也可以在這裡加上更明確的成功訊息
-        // document.getElementById('status-message').innerText = '操作成功！';
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-        document.getElementById('status-message').innerText = '發生錯誤，請重試。';
-      });
+      // 拼接 redirect URL
+      const redirectUrl = `${targetWebhookUrl}?recordId=${encodeURIComponent(recordId)}&email=${encodeURIComponent(email)}&decision=${encodeURIComponent(decision)}`;
+
+      // 立即 redirect 到 workflow2
+      window.location.href = redirectUrl;
     };
   </script>
 </body>
